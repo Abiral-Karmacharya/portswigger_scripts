@@ -1,9 +1,5 @@
 import requests
 from bs4 import BeautifulSoup
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 def start_payload(url, payload):
     url = f"{url}?cmd={payload}"
@@ -14,15 +10,10 @@ def start_payload(url, payload):
 
 def beautify(result):
     soup = BeautifulSoup(result, "html.parser")
-    text = soup.find("pre").get_text(strip=True)
-    return text
+    pre = soup.find("pre")
+    if pre:
+        text = pre.get_text(strip=True)
+        return text if text else None
+    else:
+        return None
 
-
-# print("Hey welcome to php web shell demonstration.\nTo stop just enter stop")
-# while True:  
-#     payload = input("\nEnter the payload: ")
-#     if payload == "stop":
-#         break
-#     else:
-#         print("The result is")
-#         print(start_payload(payload))
