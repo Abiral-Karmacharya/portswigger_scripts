@@ -47,7 +47,7 @@ My app is not that complicated. This app is just something I made out of interes
    3. .MAGIC_BYTE_FILE: The payload file but just add GIF at the top of the file or GIF87a.
       side note: In all constant above you will have to add the location of the files are. For example, FILE_TO_UPLOAD should contains the location of payload file and same for others.
 2. If you want to add proxies. You will need to add 'HTTP_PROXY' and your proxy ip:port for http and then 'HTTPS_PROXY' and your proxy ip:port for https.
-3. ** If you don't like pain, then just use my config.py. Run that file and you are all set **
+3. **If you don't like pain, then just use my config.py. Run that file and you are all set**
 
 **Format of .env is:** \
 export FILE_TO_UPLOAD="location_of_your_file" \
