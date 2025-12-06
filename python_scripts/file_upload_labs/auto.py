@@ -21,12 +21,25 @@ import json
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 dotenv.load_dotenv(dotenv_path="../.env")
 
+
+is_proxy = "false" # change this to true if you want to use proxy ;)
+USE_PROXY = os.getenv("USE_PROXY", is_proxy).lower() == "true"
+proxy = {
+    'http': os.getenv("PROXY_HTTP"),
+    'https': os.getenv("PROXY_HTTPS")
+} if USE_PROXY else None
+
 class FileUpload: 
     def __init__(self, url):
         self.url = url.rstrip("/")
         self.file_location = ""
         self.file_name = ""
         self.session = requests.Session()
+
+        if proxy:
+            print("hi")
+            self.session.proxies.update(proxy)  
+        self.session.verify = False
 
     def csrf_token_extract(self, url):
         try:
@@ -269,9 +282,13 @@ class FileUpload:
                 continue
         print("All exploits failed. Sorry you will have to search for better programmer than me. (╥﹏╥)")
         return False
+    
 def main():
     url = input("Enter the link to exploit: ")
     start = FileUpload(url)
     start.login()
 
-main()
+
+
+if __name__ == "__main__":
+    main()

