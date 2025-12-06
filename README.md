@@ -71,6 +71,7 @@ pip install -r requirements.txt
    Be sure to stay in the folder where config.py is present. Check by using ls ദ്ദി ˉ͈̀꒳ˉ͈́
 
 ```bash
+cd python_scripts
 python config.py
 ```
 
