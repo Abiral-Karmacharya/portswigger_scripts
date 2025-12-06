@@ -45,7 +45,7 @@ Before running the script:
 
 ```bash
 git clone https://github.com/Abiral-Karmacharya/portswigger_scripts.git
-cd python_scripts
+cd portswigger_scripts
 ```
 
 2. Add python envrironment (if you use linux, i use arch btw ( ͡° ͜ʖ ͡°)):
@@ -54,12 +54,16 @@ cd python_scripts
 ```bash
 python -m venv venv
 bash
+```
+
+```bash
 source venv/bin/activate
 ```
 
-3. Install dependencies:
+3. Install dependencies: If you did the second step be sure **to do this step**
 
 ```bash
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 

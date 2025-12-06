@@ -1,7 +1,10 @@
-requests
-re
-os
-dotenv
-pathlib 
-urllib3
-json
+# External dependencies (need to be installed)
+requests>=2.31.0
+python-dotenv>=1.0.0
+urllib3>=2.0.0
+
+# Built-in Python modules (included for documentation only - no installation needed)
+# re (built-in)
+# os (built-in)
+# pathlib (built-in)
+# json (built-in)
