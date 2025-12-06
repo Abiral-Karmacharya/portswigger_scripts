@@ -1,0 +1,7 @@
+requests
+re
+os
+dotenv
+pathlib 
+urllib3
+json

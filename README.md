@@ -39,6 +39,39 @@ Before running the script:
 
 # How to use the app
 
+## Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/Abiral-Karmacharya/portswigger_scripts.git
+cd python_scripts
+```
+
+2. Add python envrironment (if you use linux, i use arch btw ( ͡° ͜ʖ ͡°)):
+   Use this if you linux shows something like this: This environment is externally managed. This step is optionally and you might not need this if you use windows. But I do advice you to check stuff first.
+
+```bash
+python -m venv venv
+bash
+source venv/bin/activate
+```
+
+3. Install dependencies:
+
+```bash
+pip install -r requirements.txt
+```
+
+4. Run setup:
+   Be sure to stay in the folder where config.py is present. Check by using ls ദ്ദി ˉ͈̀꒳ˉ͈́
+
+```bash
+python config.py
+```
+
+## Other stuff to worry about
+
 My app is not that complicated. This app is just something I made out of interest. So just keep the points below in to consideration:
 
 1. For file upload, you will need to make a .env file in /python_script directory. Then you have to add constants which are:
