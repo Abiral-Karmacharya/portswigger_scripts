@@ -1,5 +1,7 @@
 import os 
 from pathlib import Path
+import argparse
+import urllib3
 
 payload = """<html>
 <body>
@@ -26,6 +28,7 @@ export PROXY_HTTPS="127.0.0.1:8080"
 """
 SCRIPT_DIR = Path(__file__).parent
 abs = SCRIPT_DIR / "payloads/"
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 def folder_creation():
     folder_name = abs 
@@ -73,6 +76,26 @@ def env_creation():
         return True
     except FileNotFoundError:
         return False
+    
+def parse_args():
+    parser = argparse.ArgumentParser(description='PortSwigger Lab Automation')
+
+    parser.add_argument(
+        '-p', '--proxy',
+        action='store_true',  
+        help='Enable Burp Suite proxy (127.0.0.1:8080)'
+    )
+
+
+    args = parser.parse_args()
+    if args.proxy:
+        proxy = {
+        'http': os.getenv("PROXY_HTTP"),
+        'https': os.getenv("PROXY_HTTPS")
+        } 
+    else:
+        proxy = None
+    return args, proxy
 
 if __name__ == "__main__":
     try: 

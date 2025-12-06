@@ -9,26 +9,18 @@ This script automatically exploits six of the labs of portswigger:
 
 Side note: The files has to be manually kept in.
 """ 
-import requests
-import re
-import payload_injection
-import os
-import dotenv
 from pathlib import Path
-import urllib3
-import json
+import requests, re, payload_injection, os, dotenv, json, sys
 
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+PYTHON_PATH = Path(__file__).parent.parent
+
+sys.path.append(str(PYTHON_PATH))
+from config import parse_args
+args, proxy = parse_args()
+
+PROJECT_ROOT = PYTHON_PATH.resolve()
 dotenv.load_dotenv(dotenv_path="../.env")
-PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 
-
-is_proxy = "false" # change this to true if you want to use proxy ;)
-USE_PROXY = os.getenv("USE_PROXY", is_proxy).lower() == "true"
-proxy = {
-    'http': os.getenv("PROXY_HTTP"),
-    'https': os.getenv("PROXY_HTTPS")
-} if USE_PROXY else None
 
 class FileUpload: 
     def __init__(self, url):
@@ -38,7 +30,6 @@ class FileUpload:
         self.session = requests.Session()
 
         if proxy:
-            print("hi")
             self.session.proxies.update(proxy)  
         self.session.verify = False
 

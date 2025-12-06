@@ -1,18 +1,14 @@
-import requests
-import re
-import requests
-import urllib3
-import os 
-import dotenv
+import requests, re, dotenv, sys
+from pathlib import Path
+
+PYTHON_PATH = Path(__file__).parent.parent
+
+sys.path.append(str(PYTHON_PATH))
+from config import parse_args
+args, proxy = parse_args()
+
 
 dotenv.load_dotenv(dotenv_path="../.env")
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-USE_PROXY = os.getenv("USE_PROXY", "false").lower() == "true"
-proxy ={
-    'http': os.getenv("PROXY_HTTP"),
-    'https': os.getenv("PROXY_HTTPS")
-} if USE_PROXY else None
 
 class Sqli:
     def __init__(self, url):
@@ -26,7 +22,7 @@ class Sqli:
 
     def csrf_token_extract(self):
         try:
-            url_get = self.session.get(url=self.login_url, verify=False).text
+            url_get = self.session.get(url=self.login_url).text
             csrf = re.search(r'name="csrf" value="([^"]+)"', url_get).group(1)
             if not csrf:
                 raise print(f"CSRF was not found. You might have to check the website (ᵕ—ᴗ—)")
@@ -46,9 +42,9 @@ class Sqli:
             "username": f"{username}", 
             "password": f"{password}", 
             "csrf": csrf_token 
-        }
+        }   
         try:
-            self.login_page_post = self.session.post(url=self.login_url,  data=login_info,  verify=False, allow_redirects=True)
+            self.login_page_post = self.session.post(url=self.login_url,  data=login_info,  allow_redirects=True)
             return True
 
         except requests.exceptions.Timeout:

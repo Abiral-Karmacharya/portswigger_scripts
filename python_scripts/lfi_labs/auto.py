@@ -1,9 +1,4 @@
-import requests
-import urllib3
-import os 
-import dotenv
-
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+import requests, dotenv
 dotenv.load_dotenv(dotenv_path="../.env")
 
 class LocalFile:
