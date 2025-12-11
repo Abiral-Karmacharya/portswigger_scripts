@@ -1,7 +1,7 @@
-import os 
+import os, argparse, urllib3, dotenv, requests
 from pathlib import Path
-import argparse
-import urllib3
+from bs4 import BeautifulSoup
+dotenv.load_dotenv(dotenv_path="../.env")
 
 payload = """<html>
 <body>
@@ -96,6 +96,15 @@ def parse_args():
     else:
         proxy = None
     return args, proxy
+
+def is_success(self):
+        get_page = self.session.get(url=f"{self.url}").text
+        soup = BeautifulSoup(get_page, 'html.parser')
+        filtered_soup = soup.find('p').string
+
+        if filtered_soup == "Solved":
+            return True
+        return False
 
 if __name__ == "__main__":
     try: 
