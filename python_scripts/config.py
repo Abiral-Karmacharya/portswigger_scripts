@@ -170,22 +170,22 @@ def is_success(self):
         return False
 
 if __name__ == "__main__": 
-    check_operating_system()
-    # try: 
-    #     methods = [
-    #         ("folder creation", folder_creation),
-    #         ("payload creation", payload_creation),
-    #         ("htaccess creation", htaccess_creation),
-    #         ("magic byte creation", magic_byte_creation),
-    #         ("env creation", env_creation)
-    #     ]
-    #     for method_name, method in methods:
-    #         if method():
-    #             print(f"{method_name} succeeded")
-    #         else:
-    #             print(f"{method_name} failed")
-    # except Exception as e:
-    #     print(f"An error occurred: {e}")
-    # finally:
-    #     print("If any step failed, that doesn't necessarily mean the script doesn't work. Might be that the file/folder already exists. Check the payloads and .env once ;)")
+    try: 
+        methods = [
+            ("Python setup", check_operating_system),
+            ("folder creation", folder_creation),
+            ("payload creation", payload_creation),
+            ("htaccess creation", htaccess_creation),
+            ("magic byte creation", magic_byte_creation),
+            ("env creation", env_creation)
+        ]
+        for method_name, method in methods:
+            if method():
+                print(f"{method_name} succeeded")
+            else:
+                print(f"{method_name} failed")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+    finally:
+        print("If any step failed, that doesn't necessarily mean the script doesn't work. Might be that the file/folder already exists. Check the payloads and .env once ;)")
         
