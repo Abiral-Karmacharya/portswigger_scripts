@@ -158,7 +158,7 @@ class FileUpload:
         
         is_solve = input("Do you want to learn how to solve this lab? y or n: ")
         if is_solve.lower() in ["y", "yes", "okay", "ok"]:
-            with open("./tutorial.json", "r") as f:
+            with open(f"{self.PROJECT_ROOT}/file_upload_labs/tutorial.json", "r") as f:
                 full_file = json.load(f)
                 exploit_tutorial = full_file['tutorial']
                 burpsuite_part = full_file['burpsuite']

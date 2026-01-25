@@ -6,5 +6,8 @@ if __name__ == "__main__":
     url = input("Enter the link to exploit: ")
     vulnerabilities = [FileUpload, LocalFile, Sqli]
     for vulnerability in vulnerabilities:
-        vulnerability(url).main()
+        if vulnerability(url).main():
+            break
+        else: 
+            continue
     
