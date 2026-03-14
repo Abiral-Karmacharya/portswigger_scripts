@@ -20,6 +20,9 @@ class Xss:
             exploit_url = f"{self.url}/?search="
             if self.session.get(f"{exploit_url}<script>alert('hi')</script>").status_code != 200:
                 return False
+            if not is_success(self):
+                return False
+                
             return True
         except Exception as e:
             print(e)

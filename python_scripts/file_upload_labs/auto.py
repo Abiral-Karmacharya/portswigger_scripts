@@ -315,3 +315,16 @@ if __name__ == "__main__":
     url = input("Enter the link to exploit: ")
     start = FileUpload(url)
     start.main()
+
+
+try:
+    soup = bs4.BeautifulSoup(result, "html.parser")
+    pre = soup.find(tag)
+    if pre:
+        text = pre.get_text(strip=True)
+        return text if text else None
+    else:
+        return None
+except Exception as e:
+    print(f"{e}")
+    return False

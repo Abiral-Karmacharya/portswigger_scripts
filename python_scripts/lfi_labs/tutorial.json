@@ -1,0 +1,54 @@
+{
+  "common_steps": [
+    "1. Go to revshells.com",
+    "2. Download php cmd as payload.php",
+    "3. Go to login and login as wiener(username) and peter(password)"
+  ],
+  "burpsuite": [
+    "4. For this you need burpsuite. Go to burpsuite and intercept the request with file upload",
+    "5. Send the request to repeater",
+    "6. Go to file upload web page and open the image (That should be above the upload image button)"
+  ],
+  "tutorial": {
+    "simple_file_upload": [
+      "4. There will be a file upload button. Upload the payload.php",
+      "5. That should say something like successfully uploaded",
+      "6. Go to file upload web page and open the image (That should be above the upload image button)"
+    ],
+    "content_type": [
+      "7. Find Content-Type. There should be application/x-php",
+      "8. Remove that and keep image/png or image/jpeg",
+      "9. Send the request by send button at the top",
+      "10. Your file has been sent. ",
+      "11. Go to file upload web page and open the image (That should be above the upload image button)"
+    ],
+    "path_traversal": [
+      "7. Find filename, should have filename='payload.php'.",
+      "8. Change payload.php to ../payload.php",
+      "9. Send the request",
+      "10. Go to file upload web page and open the image (That should be above the upload image button) ",
+      "11. Instead of /files/avatar/payload.php. Enter /files/payload.php in the url and hit enter."
+    ],
+    "blacklist_bypass": [
+      "7. In the body of requests, remove the php web shell payload.",
+      "8. 'AddType application/x-httpd-php .php2' keep this payload instead.",
+      "9. Change the filename. Should have filename='payload.php'.",
+      "10. After sending the request, keep the payload in the body again.",
+      "11. Then change the filename to 'payload.php2' and send.",
+      "12. Go to file upload web page and open the image (That should be above the upload image button)"
+    ],
+    "null_byte": [
+      "7. In the filename, change 'payload.php' into 'payload.php%00.png'. should have filename='payload.php'",
+      "8. Send the file",
+      "9. Go to file upload web page and open the image (That should be above the upload image button)"
+    ],
+    "magic_byte": [
+      "7. In the body of request, there should be the payload.",
+      "8. Add GIF87a at the very start and send.",
+      "9. Go to file upload web page and open the image (That should be above the upload image button)"
+    ]
+  },
+  "end_steps": [
+    "There you go simple file upload successful. You are now a hacker."
+  ]
+}
